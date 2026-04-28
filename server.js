@@ -11,7 +11,7 @@ const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const adminSessions = new Map();
 
 const dbPool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
+  host: process.env.DB_HOST || "srv2213.hstgr.io",
   port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER || "u201150341_spyrolab",
   password: process.env.DB_PASS || "Asd@088711",
