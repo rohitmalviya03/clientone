@@ -12,10 +12,10 @@ const adminSessions = new Map();
 
 const dbPool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT || 3333),
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASS || "123456",
-  database: process.env.DB_NAME || "lab_portal",
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER || "u201150341_spyrolab",
+  password: process.env.DB_PASS || "Spyrolab@rohit@0887",
+  database: process.env.DB_NAME || "u201150341_lab_portal",
   waitForConnections: true,
   connectionLimit: 10
 });
