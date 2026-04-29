@@ -421,7 +421,7 @@ function App() {
               >
                 Patient Activity
               </button>
-              <button
+              {/* <button
                 type="button"
                 className={`admin-tab ${adminTab === "packages" ? "active" : ""}`}
                 onClick={() => setAdminTab("packages")}
@@ -441,7 +441,7 @@ function App() {
                 onClick={() => setAdminTab("status")}
               >
                 Active / Inactive
-              </button>
+              </button> */}
             </div>
 
             {!adminToken ? (
