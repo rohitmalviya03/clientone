@@ -22,8 +22,10 @@ This project is a diagnostic lab website focused on **patient home sample collec
 - `GET /api/admin/bookings` (auth required)
 - `GET /api/admin/packages` (auth required)
 - `POST /api/admin/packages` (auth required)
+- `PUT /api/admin/packages/:id` (auth required)
 - `GET /api/admin/tests` (auth required)
 - `POST /api/admin/tests` (auth required)
+- `PUT /api/admin/tests/:id` (auth required)
 - `PATCH /api/admin/tests/:id/status` (auth required)
 - `PATCH /api/admin/packages/:id/status` (auth required)
 

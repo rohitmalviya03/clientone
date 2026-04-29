@@ -272,6 +272,25 @@ async function createPackage(payload) {
   return result.insertId;
 }
 
+async function updatePackage(id, payload) {
+  const sql = `UPDATE packages
+    SET name = ?, tests_count = ?, ideal_for = ?, report_time = ?, original_price_inr = ?, offer_price_inr = ?, display_order = ?, is_active = ?
+    WHERE id = ?`;
+  const values = [
+    payload.name.trim(),
+    Number(payload.tests_count),
+    payload.ideal_for.trim(),
+    payload.report_time.trim(),
+    Number(payload.original_price_inr),
+    Number(payload.offer_price_inr),
+    Number(payload.display_order || 100),
+    Number(payload.is_active) ? 1 : 0,
+    Number(id)
+  ];
+  const [result] = await dbPool.execute(sql, values);
+  return result.affectedRows;
+}
+
 async function createTest(payload) {
   const sql = `INSERT INTO tests
     (name, category, fasting_required, price_inr, display_order, is_active)
@@ -286,6 +305,23 @@ async function createTest(payload) {
   ];
   const [result] = await dbPool.execute(sql, values);
   return result.insertId;
+}
+
+async function updateTest(id, payload) {
+  const sql = `UPDATE tests
+    SET name = ?, category = ?, fasting_required = ?, price_inr = ?, display_order = ?, is_active = ?
+    WHERE id = ?`;
+  const values = [
+    payload.name.trim(),
+    payload.category.trim(),
+    Number(payload.fasting_required) ? 1 : 0,
+    Number(payload.price_inr),
+    Number(payload.display_order || 100),
+    Number(payload.is_active) ? 1 : 0,
+    Number(id)
+  ];
+  const [result] = await dbPool.execute(sql, values);
+  return result.affectedRows;
 }
 
 async function updateTestActiveFlag(id, isActive) {
@@ -474,6 +510,44 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    const adminPackageEditMatch = pathname.match(/^\/api\/admin\/packages\/(\d+)$/);
+    if (req.method === "PUT" && adminPackageEditMatch) {
+      const admin = requireAdmin(req);
+      if (!admin) {
+        sendJson(res, 401, { ok: false, message: "Unauthorized admin access." });
+        return;
+      }
+      const body = await readBody(req);
+      const parsed = JSON.parse(body || "{}");
+      const required = ["name", "tests_count", "ideal_for", "report_time", "original_price_inr", "offer_price_inr"];
+      const missing = required.filter((key) => parsed[key] === undefined || String(parsed[key]).trim() === "");
+      if (missing.length) {
+        sendJson(res, 400, { ok: false, message: `Missing required fields: ${missing.join(", ")}` });
+        return;
+      }
+      const testsCount = Number(parsed.tests_count);
+      const originalPrice = Number(parsed.original_price_inr);
+      const offerPrice = Number(parsed.offer_price_inr);
+      if (
+        Number.isNaN(testsCount) ||
+        Number.isNaN(originalPrice) ||
+        Number.isNaN(offerPrice) ||
+        testsCount <= 0 ||
+        originalPrice <= 0 ||
+        offerPrice <= 0
+      ) {
+        sendJson(res, 400, { ok: false, message: "Numeric fields must be valid positive numbers." });
+        return;
+      }
+      const affected = await updatePackage(Number(adminPackageEditMatch[1]), parsed);
+      if (!affected) {
+        sendJson(res, 404, { ok: false, message: "Package not found." });
+        return;
+      }
+      sendJson(res, 200, { ok: true, message: "Package updated successfully." });
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/admin/tests") {
       const admin = requireAdmin(req);
       if (!admin) {
@@ -508,6 +582,35 @@ const server = http.createServer(async (req, res) => {
 
       const testId = await createTest(parsed);
       sendJson(res, 201, { ok: true, message: "Test created successfully.", test_id: testId });
+      return;
+    }
+
+    const adminTestEditMatch = pathname.match(/^\/api\/admin\/tests\/(\d+)$/);
+    if (req.method === "PUT" && adminTestEditMatch) {
+      const admin = requireAdmin(req);
+      if (!admin) {
+        sendJson(res, 401, { ok: false, message: "Unauthorized admin access." });
+        return;
+      }
+      const body = await readBody(req);
+      const parsed = JSON.parse(body || "{}");
+      const required = ["name", "category", "price_inr"];
+      const missing = required.filter((key) => parsed[key] === undefined || String(parsed[key]).trim() === "");
+      if (missing.length) {
+        sendJson(res, 400, { ok: false, message: `Missing required fields: ${missing.join(", ")}` });
+        return;
+      }
+      const price = Number(parsed.price_inr);
+      if (Number.isNaN(price) || price <= 0) {
+        sendJson(res, 400, { ok: false, message: "Price must be a valid positive number." });
+        return;
+      }
+      const affected = await updateTest(Number(adminTestEditMatch[1]), parsed);
+      if (!affected) {
+        sendJson(res, 404, { ok: false, message: "Test not found." });
+        return;
+      }
+      sendJson(res, 200, { ok: true, message: "Test updated successfully." });
       return;
     }
 

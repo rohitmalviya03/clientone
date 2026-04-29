@@ -41,6 +41,7 @@ function App() {
     status: ""
   });
   const [addingPackage, setAddingPackage] = useState(false);
+  const [editingPackageId, setEditingPackageId] = useState(null);
   const [packageForm, setPackageForm] = useState({
     name: "",
     tests_count: "",
@@ -52,6 +53,7 @@ function App() {
     is_active: true
   });
   const [addingTest, setAddingTest] = useState(false);
+  const [editingTestId, setEditingTestId] = useState(null);
   const [testForm, setTestForm] = useState({
     name: "",
     category: "",
@@ -259,8 +261,9 @@ function App() {
     setAddingPackage(true);
     setAdminStatus({ type: "", message: "" });
     try {
-      const res = await fetch("/api/admin/packages", {
-        method: "POST",
+      const isEdit = Boolean(editingPackageId);
+      const res = await fetch(isEdit ? `/api/admin/packages/${editingPackageId}` : "/api/admin/packages", {
+        method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${adminToken}`
@@ -271,7 +274,10 @@ function App() {
       if (!res.ok || !data.ok) {
         throw new Error(data.message || "Failed to add package.");
       }
-      setAdminStatus({ type: "ok", message: `Package added successfully. ID: ${data.package_id}` });
+      setAdminStatus({
+        type: "ok",
+        message: isEdit ? "Package updated successfully." : `Package added successfully. ID: ${data.package_id}`
+      });
       setPackageForm({
         name: "",
         tests_count: "",
@@ -282,6 +288,7 @@ function App() {
         display_order: "100",
         is_active: true
       });
+      setEditingPackageId(null);
       await Promise.all([loadPublicData(), loadAdminCatalog()]);
     } catch (error) {
       setAdminStatus({ type: "err", message: error.message || "Failed to add package." });
@@ -299,8 +306,9 @@ function App() {
     setAddingTest(true);
     setAdminStatus({ type: "", message: "" });
     try {
-      const res = await fetch("/api/admin/tests", {
-        method: "POST",
+      const isEdit = Boolean(editingTestId);
+      const res = await fetch(isEdit ? `/api/admin/tests/${editingTestId}` : "/api/admin/tests", {
+        method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${adminToken}`
@@ -311,7 +319,10 @@ function App() {
       if (!res.ok || !data.ok) {
         throw new Error(data.message || "Failed to add test.");
       }
-      setAdminStatus({ type: "ok", message: `Test added successfully. ID: ${data.test_id}` });
+      setAdminStatus({
+        type: "ok",
+        message: isEdit ? "Test updated successfully." : `Test added successfully. ID: ${data.test_id}`
+      });
       setTestForm({
         name: "",
         category: "",
@@ -320,6 +331,7 @@ function App() {
         display_order: "100",
         is_active: true
       });
+      setEditingTestId(null);
       await Promise.all([loadPublicData(), loadAdminCatalog()]);
     } catch (error) {
       setAdminStatus({ type: "err", message: error.message || "Failed to add test." });
@@ -353,6 +365,34 @@ function App() {
     } catch (error) {
       setAdminStatus({ type: "err", message: error.message || "Status update failed." });
     }
+  }
+
+  function startEditPackage(item) {
+    setAdminTab("packages");
+    setEditingPackageId(item.id);
+    setPackageForm({
+      name: item.name || "",
+      tests_count: String(item.tests_count || ""),
+      ideal_for: item.ideal_for || "",
+      report_time: item.report_time || "",
+      original_price_inr: String(item.original_price_inr || ""),
+      offer_price_inr: String(item.offer_price_inr || ""),
+      display_order: String(item.display_order || 100),
+      is_active: Boolean(Number(item.is_active))
+    });
+  }
+
+  function startEditTest(item) {
+    setAdminTab("tests");
+    setEditingTestId(item.id);
+    setTestForm({
+      name: item.name || "",
+      category: item.category || "",
+      fasting_required: Boolean(Number(item.fasting_required)),
+      price_inr: String(item.price_inr || ""),
+      display_order: String(item.display_order || 100),
+      is_active: Boolean(Number(item.is_active))
+    });
   }
 
   return (
@@ -421,7 +461,7 @@ function App() {
               >
                 Patient Activity
               </button>
-              {/* <button
+              <button
                 type="button"
                 className={`admin-tab ${adminTab === "packages" ? "active" : ""}`}
                 onClick={() => setAdminTab("packages")}
@@ -441,7 +481,7 @@ function App() {
                 onClick={() => setAdminTab("status")}
               >
                 Active / Inactive
-              </button> */}
+              </button>
             </div>
 
             {!adminToken ? (
@@ -656,8 +696,58 @@ function App() {
                   />
                 </div>
                 <button className="btn btn-primary" type="submit" disabled={addingPackage}>
-                  {addingPackage ? "Adding Package..." : "Add Package"}
+                  {addingPackage ? (editingPackageId ? "Updating Package..." : "Adding Package...") : (editingPackageId ? "Update Package" : "Add Package")}
                 </button>
+                {editingPackageId ? (
+                  <button
+                    className="btn btn-alt"
+                    type="button"
+                    onClick={() => {
+                      setEditingPackageId(null);
+                      setPackageForm({
+                        name: "",
+                        tests_count: "",
+                        ideal_for: "",
+                        report_time: "24 hours",
+                        original_price_inr: "",
+                        offer_price_inr: "",
+                        display_order: "100",
+                        is_active: true
+                      });
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                ) : null}
+
+                <div className="table-wrap" style={{ marginTop: "14px" }}>
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Package</th>
+                        <th>Tests</th>
+                        <th>Offer Price</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminPackages.map((item) => (
+                        <tr key={`pkg-edit-${item.id}`}>
+                          <td>{item.name}</td>
+                          <td>{item.tests_count}</td>
+                          <td>INR {item.offer_price_inr}</td>
+                          <td>{Number(item.is_active) ? "Active" : "Inactive"}</td>
+                          <td>
+                            <button type="button" className="btn btn-alt" onClick={() => startEditPackage(item)}>
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </form>
             ) : null}
 
@@ -724,8 +814,58 @@ function App() {
                   </div>
                 </div>
                 <button className="btn btn-primary" type="submit" disabled={addingTest}>
-                  {addingTest ? "Adding Test..." : "Add Test"}
+                  {addingTest ? (editingTestId ? "Updating Test..." : "Adding Test...") : (editingTestId ? "Update Test" : "Add Test")}
                 </button>
+                {editingTestId ? (
+                  <button
+                    className="btn btn-alt"
+                    type="button"
+                    onClick={() => {
+                      setEditingTestId(null);
+                      setTestForm({
+                        name: "",
+                        category: "",
+                        fasting_required: false,
+                        price_inr: "",
+                        display_order: "100",
+                        is_active: true
+                      });
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                ) : null}
+
+                <div className="table-wrap" style={{ marginTop: "14px" }}>
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Test</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Fasting</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminTests.map((item) => (
+                        <tr key={`test-edit-${item.id}`}>
+                          <td>{item.name}</td>
+                          <td>{item.category}</td>
+                          <td>INR {item.price_inr}</td>
+                          <td>{Number(item.fasting_required) ? "Required" : "No"}</td>
+                          <td>{Number(item.is_active) ? "Active" : "Inactive"}</td>
+                          <td>
+                            <button type="button" className="btn btn-alt" onClick={() => startEditTest(item)}>
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </form>
             ) : null}
 
