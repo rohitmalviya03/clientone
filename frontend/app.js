@@ -461,27 +461,27 @@ function App() {
               >
                 Patient Activity
               </button>
-              <button
-                type="button"
-                className={`admin-tab ${adminTab === "packages" ? "active" : ""}`}
-                onClick={() => setAdminTab("packages")}
-              >
-                Add Package
-              </button>
-              <button
-                type="button"
-                className={`admin-tab ${adminTab === "tests" ? "active" : ""}`}
-                onClick={() => setAdminTab("tests")}
-              >
-                Add Test
-              </button>
-              <button
-                type="button"
-                className={`admin-tab ${adminTab === "status" ? "active" : ""}`}
-                onClick={() => setAdminTab("status")}
-              >
-                Active / Inactive
-              </button>
+              // <button
+              //   type="button"
+              //   className={`admin-tab ${adminTab === "packages" ? "active" : ""}`}
+              //   onClick={() => setAdminTab("packages")}
+              // >
+              //   Add Package
+              // </button>
+              // <button
+              //   type="button"
+              //   className={`admin-tab ${adminTab === "tests" ? "active" : ""}`}
+              //   onClick={() => setAdminTab("tests")}
+              // >
+              //   Add Test
+              // </button>
+              // <button
+              //   type="button"
+              //   className={`admin-tab ${adminTab === "status" ? "active" : ""}`}
+              //   onClick={() => setAdminTab("status")}
+              // >
+              //   Active / Inactive
+              // </button>
             </div>
 
             {!adminToken ? (
