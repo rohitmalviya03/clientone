@@ -508,7 +508,7 @@ function App() {
                 <button className="btn btn-primary" type="submit">
                   Login
                 </button>
-                <p className="admin-note">Default: labadmin / admin123 (change via env vars).</p>
+                // <p className="admin-note">Default: labadmin / admin123 (change via env vars).</p>
               </form>
             ) : null}
 
